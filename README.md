@@ -5,14 +5,14 @@ WezTerm on Windows, set up like a Linux terminal: **Git Bash** as the shell, a z
 ## Install
 
 ```powershell
-git clone https://github.com/__REPO__.git $HOME\wezterm-setup
+git clone https://github.com/CypheronX/wezterm-setup.git $HOME\wezterm-setup
 powershell -ExecutionPolicy Bypass -File $HOME\wezterm-setup\install.ps1
 ```
 
 No git yet? If the repo is public:
 
 ```powershell
-irm https://raw.githubusercontent.com/__REPO__/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/CypheronX/wezterm-setup/main/install.ps1 | iex
 ```
 
 The script:

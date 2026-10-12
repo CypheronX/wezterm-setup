@@ -8,7 +8,7 @@
 
 .EXAMPLE
   # straight from GitHub (public repo only)
-  irm https://raw.githubusercontent.com/__REPO__/main/install.ps1 | iex
+  irm https://raw.githubusercontent.com/CypheronX/wezterm-setup/main/install.ps1 | iex
 #>
 [CmdletBinding()]
 param(
@@ -17,7 +17,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Repo = '__REPO__'
+$Repo = 'CypheronX/wezterm-setup'
 $Branch = 'main'
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Magenta }
