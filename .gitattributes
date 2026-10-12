@@ -1,0 +1,9 @@
+* text=auto
+# bash/readline break on CRLF
+config/.bashrc        text eol=lf
+config/.bash_profile  text eol=lf
+config/.inputrc       text eol=lf
+*.sh                  text eol=lf
+*.toml                text eol=lf
+*.lua                 text eol=lf
+*.ps1                 text eol=crlf
