@@ -15,6 +15,11 @@ config.launch_menu = {
   { label = 'Claude Code', args = { 'C:\\Program Files\\Git\\bin\\bash.exe', '-i', '-l', '-c', 'claude' } },
 }
 
+---------------------------------------------------------------- rendering
+-- WebGpu (DX12/Vulkan) instead of OpenGL: wezterm-gui crashed in AMD's OpenGL driver atio6axx.dll (2026-11-10)
+config.front_end = 'WebGpu'
+config.webgpu_power_preference = 'HighPerformance'
+
 ---------------------------------------------------------------- looks
 config.color_scheme = 'Catppuccin Mocha'
 config.font = wezterm.font_with_fallback {
