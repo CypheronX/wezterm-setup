@@ -46,7 +46,7 @@ $Cfg = Join-Path $Root 'config'
 
 # ------------------------------------------------------------------ apps
 $Apps = @(
-  @{ Id = 'wez.wezterm';                  Name = 'WezTerm' },
+  @{ Id = 'wez.wezterm.nightly';          Name = 'WezTerm (nightly)' },
   @{ Id = 'Git.Git';                      Name = 'Git for Windows (Git Bash)' },
   @{ Id = 'Starship.Starship';            Name = 'Starship prompt' },
   @{ Id = 'junegunn.fzf';                 Name = 'fzf' },
@@ -60,6 +60,13 @@ if (-not $SkipApps) {
   Step 'Installing apps with winget'
   if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     throw 'winget not found. Install "App Installer" from the Microsoft Store and re-run.'
+  }
+  # Nightly replaces the stable build (20240203, no crash fixes since).
+  winget list --id wez.wezterm -e --accept-source-agreements --disable-interactivity *> $null
+  if ($LASTEXITCODE -eq 0) {
+    if ($env:TERM_PROGRAM -eq 'WezTerm') { Warn 'running inside WezTerm: the switch to nightly closes this window' }
+    Info 'removing stable WezTerm (replaced by nightly)...'
+    winget uninstall --id wez.wezterm -e --silent --disable-interactivity | Out-Null
   }
   foreach ($a in $Apps) {
     winget list --id $a.Id -e --accept-source-agreements --disable-interactivity *> $null
