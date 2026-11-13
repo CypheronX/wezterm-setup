@@ -17,7 +17,7 @@ irm https://raw.githubusercontent.com/CypheronX/wezterm-setup/main/install.ps1 |
 
 The script:
 
-1. Installs with winget (skipping anything already present): WezTerm nightly (replaces a stable install), Git for Windows, Starship, fzf, zoxide, JetBrainsMono Nerd Font, GitHub CLI, Claude Code
+1. Installs with winget (skipping anything already present): Git for Windows, Starship, fzf, zoxide, JetBrainsMono Nerd Font, GitHub CLI, Claude Code; then WezTerm nightly from GitHub (replaces the old stable build, download checked against the GitHub digest)
 2. Copies the configs from `config/` into your home folder (existing files are backed up as `*.bak-<timestamp>`)
 3. Sets sensible global git defaults and asks for `user.name` / `user.email` if missing
 

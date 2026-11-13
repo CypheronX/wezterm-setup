@@ -30,6 +30,27 @@ function Refresh-Path {
               [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
+# WezTerm nightly straight from GitHub: the stable build (20240203) has crash bugs fixed only in nightly, and winget's
+# nightly manifest pins a hash that goes stale every night. The download is checked against GitHub's own digest.
+function Install-WeztermNightly {
+  $exe = 'C:\Program Files\WezTerm\wezterm.exe'
+  if ((Test-Path $exe) -and -not ((& $exe --version) -match ' 20240203-')) { Ok 'WezTerm nightly already installed'; return }
+  if ($env:TERM_PROGRAM -eq 'WezTerm') { Warn 'WezTerm: run this script from another terminal to switch to nightly'; return }
+  Info 'installing WezTerm nightly...'
+  $name = 'WezTerm-nightly-setup.exe'
+  $asset = (Invoke-RestMethod 'https://api.github.com/repos/wezterm/wezterm/releases/tags/nightly').assets |
+    Where-Object name -eq $name
+  $dir = Join-Path $env:TEMP ('wezterm-nightly-' + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Force $dir | Out-Null
+  $setup = Join-Path $dir $name
+  Invoke-WebRequest $asset.browser_download_url -OutFile $setup -UseBasicParsing
+  if ('sha256:' + (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower() -ne $asset.digest) {
+    Warn 'WezTerm nightly download does not match the GitHub digest; not installed'; return
+  }
+  $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Verb RunAs -Wait -PassThru
+  if ($p.ExitCode -eq 0) { Ok 'WezTerm nightly' } else { Warn "WezTerm nightly failed (installer exit $($p.ExitCode))" }
+}
+
 # ------------------------------------------------------------------ locate config files
 $Root = $PSScriptRoot
 if (-not $Root -or -not (Test-Path (Join-Path $Root 'config\.wezterm.lua'))) {
@@ -46,7 +67,6 @@ $Cfg = Join-Path $Root 'config'
 
 # ------------------------------------------------------------------ apps
 $Apps = @(
-  @{ Id = 'wez.wezterm.nightly';          Name = 'WezTerm (nightly)' },
   @{ Id = 'Git.Git';                      Name = 'Git for Windows (Git Bash)' },
   @{ Id = 'Starship.Starship';            Name = 'Starship prompt' },
   @{ Id = 'junegunn.fzf';                 Name = 'fzf' },
@@ -61,13 +81,6 @@ if (-not $SkipApps) {
   if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     throw 'winget not found. Install "App Installer" from the Microsoft Store and re-run.'
   }
-  # Nightly replaces the stable build (20240203, no crash fixes since).
-  winget list --id wez.wezterm -e --accept-source-agreements --disable-interactivity *> $null
-  if ($LASTEXITCODE -eq 0) {
-    if ($env:TERM_PROGRAM -eq 'WezTerm') { Warn 'running inside WezTerm: the switch to nightly closes this window' }
-    Info 'removing stable WezTerm (replaced by nightly)...'
-    winget uninstall --id wez.wezterm -e --silent --disable-interactivity | Out-Null
-  }
   foreach ($a in $Apps) {
     winget list --id $a.Id -e --accept-source-agreements --disable-interactivity *> $null
     if ($LASTEXITCODE -eq 0) { Ok "$($a.Name) already installed"; continue }
@@ -75,6 +88,7 @@ if (-not $SkipApps) {
     winget install --id $a.Id -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity | Out-Null
     if ($LASTEXITCODE -eq 0) { Ok $a.Name } else { Warn "$($a.Name) failed (winget exit $LASTEXITCODE)" }
   }
+  Install-WeztermNightly
   Refresh-Path
 }
 
