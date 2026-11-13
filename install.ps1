@@ -30,27 +30,6 @@ function Refresh-Path {
               [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
-# WezTerm nightly straight from GitHub: the stable build (20240203) has crash bugs fixed only in nightly, and winget's
-# nightly manifest pins a hash that goes stale every night. The download is checked against GitHub's own digest.
-function Install-WeztermNightly {
-  $exe = 'C:\Program Files\WezTerm\wezterm.exe'
-  if ((Test-Path $exe) -and -not ((& $exe --version) -match ' 20240203-')) { Ok 'WezTerm nightly already installed'; return }
-  if ($env:TERM_PROGRAM -eq 'WezTerm') { Warn 'WezTerm: run this script from another terminal to switch to nightly'; return }
-  Info 'installing WezTerm nightly...'
-  $name = 'WezTerm-nightly-setup.exe'
-  $asset = (Invoke-RestMethod 'https://api.github.com/repos/wezterm/wezterm/releases/tags/nightly').assets |
-    Where-Object name -eq $name
-  $dir = Join-Path $env:TEMP ('wezterm-nightly-' + [guid]::NewGuid().ToString('N'))
-  New-Item -ItemType Directory -Force $dir | Out-Null
-  $setup = Join-Path $dir $name
-  Invoke-WebRequest $asset.browser_download_url -OutFile $setup -UseBasicParsing
-  if ('sha256:' + (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower() -ne $asset.digest) {
-    Warn 'WezTerm nightly download does not match the GitHub digest; not installed'; return
-  }
-  $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Verb RunAs -Wait -PassThru
-  if ($p.ExitCode -eq 0) { Ok 'WezTerm nightly' } else { Warn "WezTerm nightly failed (installer exit $($p.ExitCode))" }
-}
-
 # ------------------------------------------------------------------ locate config files
 $Root = $PSScriptRoot
 if (-not $Root -or -not (Test-Path (Join-Path $Root 'config\.wezterm.lua'))) {
@@ -88,7 +67,9 @@ if (-not $SkipApps) {
     winget install --id $a.Id -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity | Out-Null
     if ($LASTEXITCODE -eq 0) { Ok $a.Name } else { Warn "$($a.Name) failed (winget exit $LASTEXITCODE)" }
   }
-  Install-WeztermNightly
+  # WezTerm nightly from GitHub: the stable build (20240203) has crash bugs fixed only in nightly, and winget's
+  # nightly manifest pins a hash that goes stale every night.
+  & (Join-Path $Root 'update-wezterm.ps1')
   Refresh-Path
 }
 
